@@ -1,8 +1,10 @@
 package AddressBookUsingFile;
 import com.opencsv.CSVWriter;
+import com.google.gson.Gson;
 import com.opencsv.CSVReader;
 
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.nio.file.Files;
@@ -16,6 +18,7 @@ import java.util.Scanner;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.io.FileWriter;
+import java.io.BufferedReader;
 
 public class AddressBookFileOperations {
 
@@ -27,6 +30,7 @@ public class AddressBookFileOperations {
 	public HashMap<String, String> personInState = new HashMap<String, String>();
 	public static String ADDRESSBOOK_FILENAME = "AddressBook.txt";
 	public static String CSV_FILEPATH = "AddressBookCSV.csv";
+	public static String JSON_FILEPATH = "AddressBookJSON.json";
 	
 	public void addAddressBook() {
 		addressBook.add(contactDetails = new ArrayList<contactBook>());
@@ -254,11 +258,11 @@ public class AddressBookFileOperations {
     		FileWriter fw = new FileWriter(CSV_FILEPATH);
     		CSVWriter writer = new CSVWriter(fw);
     		
-    		List<String[]> data = new ArrayList<String[]>();
-    		data.add(new String[] {"firstName","lastName","address","city","state","zip","phoneNum"});
+    		List<String[]> csvdata = new ArrayList<String[]>();
+    		csvdata.add(new String[] {"firstName","lastName","address","city","state","zip","phoneNum"});
     	  	addressBook.stream().forEach(contact -> {
         		for (contactBook n : contact) {
-        			data.add(new String[] {
+        			csvdata.add(new String[] {
         					n.firstName,
         					n.lastName,
         					n.address,
@@ -270,8 +274,9 @@ public class AddressBookFileOperations {
         		}
     	  	});  
     	try {
-    		writer.writeAll(data);
+    		writer.writeAll(csvdata);
     		writer.close();
+    		fw.close();
     	}
     	catch(IOException e) {
     		e.printStackTrace();
@@ -300,7 +305,45 @@ public class AddressBookFileOperations {
     	}
     }
     
+    public void writeJSONData() throws IOException{
+       FileWriter fw = new FileWriter(new File(JSON_FILEPATH));
+       Gson gsondata = new Gson();
+       addressBook.stream().forEach(contact -> {
+    	   for (contactBook n : contact) {
+	      		String jsonString = gsondata.toJson(n).concat("\n");
+	       		try {
+		         	fw.write(jsonString);
+	       		}
+	       	    catch(IOException e) {
+	       	    	e.printStackTrace();
+	       	    }
+	       }      		
+	  });
+	  fw.close(); 
+    }
     
+    public void readJSONData() {
+    	Gson gson = new Gson();
+    	try {
+			BufferedReader br = new BufferedReader(new FileReader("AddressBookJSON.json"));
+			br.lines().forEach(n->{
+				//convert the json string back to object
+				contactBook contactObj = gson.fromJson(n, contactBook.class);
+				System.out.println("Firstname: " + contactObj.firstName);
+				System.out.println("Lastname: " + contactObj.lastName);
+				System.out.println("Address: " + contactObj.address);
+				System.out.println("State: " + contactObj.city);
+				System.out.println("City: " + contactObj.state);
+				System.out.println("Zipcode: " + contactObj.zip);
+				System.out.println("Phone number: " + contactObj.phoneNum);
+				System.out.println();
+			});
+			br.close();
+		}catch(IOException e) {
+			e.printStackTrace();
+		}    	
+    }
+       
 	public static void main(String[] args) throws IOException {
 		AddressBookFileOperations bookBuilder = new AddressBookFileOperations();
 		Scanner sc = new Scanner(System.in);
@@ -308,7 +351,10 @@ public class AddressBookFileOperations {
 		int flag=0;
 		while (flag==0) {
 			System.out.println("Choose an option: ");
-			System.out.println("1.Add a contact 2.Edit a contact 3.Delete a contact  4.Print all contacts 5.Add Another Address Book 6.Print Address Book 7.Search By City or State 8.View persons in city or state 9.Count Person In City or State 10.Sort By Name 11.Sort by City,State or ZipCode 12.Write to File 13.Read from File 14.Exit: ");
+			System.out.println("1.Add a contact 2.Edit a contact 3.Delete a contact  4.Print all contacts 5.Add Another Address Book 6.Print Address Book "
+					+ "7.Search By City or State 8.View persons in city or state 9.Count Person In City or State 10.Sort By Name "
+					+ "11.Sort by City,State or ZipCode 12.Write to File 13.Read from File 14.Write to CSV File"
+					+ "15.Read from CSV File 16.Write to JSON file 17.Read from JSON file 18.Exit: ");
 			int i = sc.nextInt();
 			
 			switch(i) {
@@ -358,6 +404,12 @@ public class AddressBookFileOperations {
 					bookBuilder.readCSVData();
 					break;
 				case 16:
+					bookBuilder.writeJSONData();
+					break;
+				case 17:
+					bookBuilder.readJSONData();
+					break;
+				case 18:
 					flag = 1;
 					break;
 			}
